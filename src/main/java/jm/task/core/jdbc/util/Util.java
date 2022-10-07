@@ -3,26 +3,34 @@ package jm.task.core.jdbc.util;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.concurrent.Callable;
 
 public class Util {
-    private static final String URL = "jdbc:mysql://localhost:3306/my_db?serverTimezone=UTC";
+    private static final String URL = "jdbc:mysql://localhost:3306/my_db";
     private static final String USERNAME = "root";
     private static final String PASSWORD = "12345";
 
     private static Connection connection;
-    static {
+    private static Util util;
+
+    private Util() {
         try {
-            connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-        } catch (SQLException e) {
+            if (connection == null || connection.isClosed()) {
+                Class.forName("com.mysql.cj.jdbc.Driver");
+                connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+            }
+        } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
         }
     }
 
     public static Connection getConnection() {
+        if (util == null) {
+            util = new Util();
+        }
         return connection;
     }
-
-    public static void closeConnection() {
+    public static void close() {
         try {
             connection.close();
         } catch (SQLException e) {
